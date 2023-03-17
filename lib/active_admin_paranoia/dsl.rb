@@ -1,8 +1,8 @@
 module ActiveAdminParanoia
   module DSL
     def active_admin_paranoia
-      archived_at_column = @resource.paranoia_column
-      not_archived_value = @resource.paranoia_sentinel_value
+      # archived_at_column = @resource.paranoia_column
+      # not_archived_value = @resource.paranoia_sentinel_value
 
       controller do
         def find_resource
@@ -32,11 +32,11 @@ module ActiveAdminParanoia
         end
       end
 
-      action_item :destroy, only: :show, if: proc { !resource.send(archived_at_column) } do
+      action_item :destroy, only: :show, if: proc { !resource.send(resource_class.to_s.camelize.constantize.paranoia_column) } do
         link_to(I18n.t('active_admin_paranoia.delete_model', model: resource_class.to_s.titleize), resource_path(resource), method: :delete, data: { confirm: I18n.t('active_admin_paranoia.delete_confirmation') }) if authorized?(ActiveAdmin::Auth::DESTROY, resource)
       end
 
-      action_item :restore, only: :show, if: proc { resource.send(archived_at_column) } do
+      action_item :restore, only: :show, if: proc { resource.send(resource_class.to_s.camelize.constantize.paranoia_column) } do
         link_to(I18n.t('active_admin_paranoia.restore_model', model: resource_class.to_s.titleize), "#{resource_path(resource)}/restore", method: :put, data: { confirm: I18n.t('active_admin_paranoia.restore_confirmation') }) if authorized?(ActiveAdminParanoia::Auth::RESTORE, resource)
       end
 
