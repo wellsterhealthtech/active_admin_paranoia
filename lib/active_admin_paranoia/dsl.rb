@@ -1,15 +1,18 @@
 module ActiveAdminParanoia
   module DSL
     def active_admin_paranoia
+      archived_at_column = @resource.paranoia_column
+      not_archived_value = @resource.paranoia_sentinel_value
+
       controller do
         def find_resource
           resource_class.to_s.camelize.constantize.with_deleted.public_send(method_for_find, params[:id])
         end
       end
 
-      batch_action :destroy, confirm: proc{ I18n.t('active_admin.batch_actions.delete_confirmation', plural_model: resource_class.to_s.downcase.pluralize) }, if: proc{ authorized?(ActiveAdmin::Auth::DESTROY, resource_class) && params[:scope] != 'archived' } do |ids|
+      batch_action :destroy, confirm: proc{ I18n.t('active_admin_paranoia.batch_actions.delete_confirmation', plural_model: resource_class.to_s.downcase.pluralize) }, if: proc{ authorized?(ActiveAdmin::Auth::DESTROY, resource_class) && params[:scope] != 'archived' } do |ids|
         resource_class.to_s.camelize.constantize.where(id: ids).destroy_all
-        options = { notice: I18n.t('active_admin.batch_actions.succesfully_destroyed', count: ids.count, model: resource_class.to_s.camelize.constantize.model_name, plural_model: resource_class.to_s.downcase.pluralize) }
+        options = { notice: I18n.t('active_admin_paranoia.batch_actions.succesfully_destroyed', count: ids.count, model: resource_class.to_s.camelize.constantize.model_name, plural_model: resource_class.to_s.downcase.pluralize) }
         # For more info, see here: https://github.com/rails/rails/pull/22506
         if Rails::VERSION::MAJOR >= 5
           redirect_back({ fallback_location: ActiveAdmin.application.root_to }.merge(options))
@@ -29,7 +32,11 @@ module ActiveAdminParanoia
         end
       end
 
-      action_item :restore, only: :show do
+      action_item :destroy, only: :show, if: proc { !resource.send(archived_at_column) } do
+        link_to(I18n.t('active_admin_paranoia.delete_model', model: resource_class.to_s.titleize), resource_path(resource), method: :delete, data: { confirm: I18n.t('active_admin_paranoia.delete_confirmation') }) if authorized?(ActiveAdmin::Auth::DESTROY, resource)
+      end
+
+      action_item :restore, only: :show, if: proc { resource.send(archived_at_column) } do
         link_to(I18n.t('active_admin_paranoia.restore_model', model: resource_class.to_s.titleize), "#{resource_path(resource)}/restore", method: :put, data: { confirm: I18n.t('active_admin_paranoia.restore_confirmation') }) if authorized?(ActiveAdminParanoia::Auth::RESTORE, resource)
       end
 
