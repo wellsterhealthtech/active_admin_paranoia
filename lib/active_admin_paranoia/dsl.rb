@@ -36,6 +36,12 @@ module ActiveAdminParanoia
         end
       end
 
+      config.action_items.delete_if { |item| item.name == :edit && item.display_on?(:show) } #&& resource.send(resource_class.to_s.camelize.constantize.paranoia_column) }
+      action_item :edit, only: :show, if: proc { !resource.send(resource_class.to_s.camelize.constantize.paranoia_column) } do
+        link_to(I18n.t('active_admin.edit_model', model: resource_class.to_s.titleize), "#{resource_path(resource)}/edit")
+      end
+
+      config.action_items.delete_if { |item| item.name == :destroy && item.display_on?(:show) } # && resource.send(resource_class.to_s.camelize.constantize.paranoia_column) }
       action_item :archive, only: :show, if: proc { !resource.send(resource_class.to_s.camelize.constantize.paranoia_column) } do
         link_to(I18n.t('active_admin_paranoia.delete_model', model: resource_class.to_s.titleize), "#{resource_path(resource)}/archive", method: :put, data: { confirm: I18n.t('active_admin_paranoia.delete_confirmation') }) if authorized?(ActiveAdmin::Auth::DESTROY, resource)
       end
