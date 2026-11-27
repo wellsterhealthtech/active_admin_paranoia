@@ -8,8 +8,10 @@ module ActiveAdminParanoia
         resource_class.to_s.camelize.constantize.where(id: ids).destroy_all
         options = { notice: I18n.t('active_admin_paranoia.batch_actions.succesfully_destroyed', count: ids.count, model: resource_class.to_s.camelize.constantize.model_name, plural_model: resource_class.to_s.downcase.pluralize) }
         # For more info, see here: https://github.com/rails/rails/pull/22506
-        if Rails::VERSION::MAJOR >= 5
-          controller.redirect_back({ fallback_location: ActiveAdmin.application.root_to }.merge(options))
+        if Rails::VERSION::MAJOR >= 7
+          controller.redirect_back_or_to(controller.send(:collection_path), **options)
+        elsif Rails::VERSION::MAJOR >= 5
+          controller.redirect_back(fallback_location: controller.send(:collection_path), **options)
         else
           controller.redirect_to :back, options
         end
@@ -29,8 +31,10 @@ module ActiveAdminParanoia
         resource_class.to_s.camelize.constantize.restore(ids, recursive: true)
         options = { notice: I18n.t('active_admin_paranoia.batch_actions.succesfully_restored', count: ids.count, model: resource_class.to_s.camelize.constantize.model_name, plural_model: resource_class.to_s.downcase.pluralize) }
         # For more info, see here: https://github.com/rails/rails/pull/22506
-        if Rails::VERSION::MAJOR >= 5
-          redirect_back({ fallback_location: ActiveAdmin.application.root_to }.merge(options))
+        if Rails::VERSION::MAJOR >= 7
+          redirect_back_or_to(collection_path, **options)
+        elsif Rails::VERSION::MAJOR >= 5
+          redirect_back(fallback_location: collection_path, **options)
         else
           redirect_to :back, options
         end
@@ -58,8 +62,10 @@ module ActiveAdminParanoia
         resource.restore(recursive: true)
         options = { notice: I18n.t('active_admin_paranoia.batch_actions.succesfully_restored', count: 1, model: resource_class.to_s.camelize.constantize.model_name, plural_model: resource_class.to_s.downcase.pluralize) }
         # For more info, see here: https://github.com/rails/rails/pull/22506
-        if Rails::VERSION::MAJOR >= 5
-          redirect_back({ fallback_location: ActiveAdmin.application.root_to }.merge(options))
+        if Rails::VERSION::MAJOR >= 7
+          redirect_back_or_to(collection_path, **options)
+        elsif Rails::VERSION::MAJOR >= 5
+          redirect_back(fallback_location: collection_path, **options)
         else
           redirect_to :back, options
         end
